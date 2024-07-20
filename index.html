@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>Stock Updates</title>
+  </head>
+  <body>
+    <h1>Real-Time Stock Updates</h1>
+    <button id="startButton">Start</button>
+    <button id="stopButton" disabled>Stop</button>
+    <ul id="stocks"></ul>
+
+    <script>
+      let eventSource;
+
+      document.getElementById("startButton").addEventListener("click", () => {
+        if (!eventSource) {
+          eventSource = new EventSource("http://localhost:3000/stocks");
+          eventSource.onmessage = (event) => {
+            const stockUpdate = JSON.parse(event.data);
+            const stockList = document.getElementById("stocks");
+            const listItem = document.createElement("li");
+            listItem.textContent = `Symbol: ${
+              stockUpdate.symbol
+            }, Price: ${stockUpdate.price.toFixed(2)}`;
+            stockList.appendChild(listItem);
+          };
+
+          eventSource.onerror = (err) => {
+            console.error("EventSource failed:", err);
+            eventSource.close();
+            eventSource = null;
+          };
+
+          document.getElementById("startButton").disabled = true;
+          document.getElementById("stopButton").disabled = false;
+        }
+      });
+
+      document.getElementById("stopButton").addEventListener("click", () => {
+        if (eventSource) {
+          eventSource.close();
+          eventSource = null;
+          document.getElementById("startButton").disabled = false;
+          document.getElementById("stopButton").disabled = true;
+        }
+      });
+    </script>
+  </body>
+</html>
